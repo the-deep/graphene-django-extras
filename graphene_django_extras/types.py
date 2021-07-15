@@ -611,9 +611,7 @@ class DjangoSerializerType(ObjectType):
     @classmethod
     def list(cls, manager, filterset_class, filtering_args, root, info, **kwargs):
 
-        qs = queryset_factory(
-            cls._meta.queryset or manager, info.field_asts, info.fragments, **kwargs
-        )
+        qs = queryset_factory(cls._meta.queryset or manager, root, info, **kwargs)
 
         filter_kwargs = {k: v for k, v in kwargs.items() if k in filtering_args}
 

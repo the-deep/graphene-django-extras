@@ -167,7 +167,7 @@ def create_obj(django_model, new_obj_key=None, *args, **kwargs):
 
 def clean_dict(d):
     """
-        Remove all empty fields in a nested dict
+    Remove all empty fields in a nested dict
     """
 
     if not isinstance(d, (dict, list)):
@@ -244,6 +244,18 @@ def _get_queryset(klass):
             "Manager, or QuerySet".format(klass__name)
         )
     return manager.all()
+
+
+def _get_custom_resolver(info):
+    """
+    Get custom user defined resolver for query.
+    This resolver must return QuerySet instance to be successfully resolved.
+    """
+    parent = info.parent_type
+    custom_resolver_name = f"resolve_{to_snake_case(info.field_name)}"
+    if hasattr(parent.graphene_type, custom_resolver_name):
+        return getattr(parent.graphene_type, custom_resolver_name)
+    return None
 
 
 def get_Object_or_None(klass, *args, **kwargs):
@@ -348,12 +360,13 @@ def recursive_params(
     return select_related, prefetch_related
 
 
-def queryset_factory(manager, fields_asts=None, fragments=None, **kwargs):
+def queryset_factory(manager, root, info, **kwargs):
 
     select_related = []
     prefetch_related = []
     available_related_fields = get_related_fields(manager.model)
 
+    fields_asts = info.field_nodes
     for f in kwargs.keys():
         temp = available_related_fields.get(f.split("__", 1)[0], None)
         if temp:
@@ -367,11 +380,15 @@ def queryset_factory(manager, fields_asts=None, fragments=None, **kwargs):
     if fields_asts:
         select_related, prefetch_related = recursive_params(
             fields_asts[0].selection_set,
-            fragments,
+            info.fragments,
             available_related_fields,
             select_related,
             prefetch_related,
         )
+
+    custom_resolver = _get_custom_resolver(info)
+    if custom_resolver is not None:
+        manager = custom_resolver(root, info, **kwargs)
 
     if select_related and prefetch_related:
         return _get_queryset(
