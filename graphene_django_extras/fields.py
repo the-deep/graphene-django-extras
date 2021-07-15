@@ -35,16 +35,19 @@ class DjangoObjectField(Field):
         return self.type._meta.node._meta.model
 
     @staticmethod
-    def object_resolver(manager, root, info, **kwargs):
+    def object_resolver(_type, root, info, **kwargs):
         id = kwargs.pop("id", None)
-
+        manager = _type._meta.model._default_manager
+        queryset = manager.get_queryset()
+        if hasattr(_type, "get_custom_node"):
+            return _type.get_custom_node(queryset, info, id)
         try:
-            return manager.get_queryset().get(pk=id)
+            return queryset.get(pk=id)
         except manager.model.DoesNotExist:
             return None
 
     def get_resolver(self, parent_resolver):
-        return partial(self.object_resolver, self.type._meta.model._default_manager)
+        return partial(self.object_resolver, self.type)
 
 
 # *********************************************** #

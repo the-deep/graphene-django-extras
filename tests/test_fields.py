@@ -124,9 +124,13 @@ class DjangoSerializerTypeTest(ParentTest, TestCase):
             "fields": "id, username, email",
         }
 
-    def test_filter_single_object(self):
+    def test_filter_single_object_with_custom_queryset(self):
+        staff_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=True)
+        normal_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=False)
+
+        # Okay for staff user as get_custom_node will give staff user
         query = queries.USER % {
-            "filter": "id: {}".format(self.user.id),
+            "filter": "id: {}".format(staff_user.id),
             "fields": "username",
         }
         response = self.client.query(query)
@@ -134,7 +138,31 @@ class DjangoSerializerTypeTest(ParentTest, TestCase):
         data = response.json()
         self.assertIn("user2", data["data"])
         self.assertTrue(data["data"]["user2"])
-        self.assertEqual(data["data"]["user2"]["username"], self.user.username)
+        self.assertEqual(data["data"]["user2"]["username"], staff_user.username)
+
+        # Not okay for normal user as get_custom_node will give staff user
+        query = queries.USER % {
+            "filter": "id: {}".format(normal_user.id),
+            "fields": "username",
+        }
+        response = self.client.query(query)
+        self.assertEqual(response.status_code, 200, response.content)
+        data = response.json()
+        self.assertIn("user2", data["data"])
+        self.assertFalse(data["data"]["user2"])
+
+    def test_filter_single_object(self):
+        staff_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=True)
+        query = queries.USER % {
+            "filter": "id: {}".format(staff_user.id),
+            "fields": "username",
+        }
+        response = self.client.query(query)
+        self.assertEqual(response.status_code, 200, response.content)
+        data = response.json()
+        self.assertIn("user2", data["data"])
+        self.assertTrue(data["data"]["user2"])
+        self.assertEqual(data["data"]["user2"]["username"], staff_user.username)
 
 
 class DjangoCustomResolverTest(ParentTest, TestCase):

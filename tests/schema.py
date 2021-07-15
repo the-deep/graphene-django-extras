@@ -35,6 +35,10 @@ class UserType(DjangoObjectType):
             "email": ("icontains", "iexact"),
         }
 
+    @staticmethod
+    def get_custom_node(queryset, info, id):
+        return User.objects.filter(is_staff=True, pk=id).first()
+
 
 class User1ListType(DjangoListObjectType):
     class Meta:
