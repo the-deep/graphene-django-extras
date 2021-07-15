@@ -110,8 +110,9 @@ class Query(graphene.ObjectType):
     def resolve_time_(self, info, *args, **kwargs):
         return datetime.time(10, 21, 30)
 
-   @staticmethod
+    @staticmethod
     def resolve_all_users4(root, info, **kwargs):
         return User.objects.filter(is_staff=True)
+
 
 schema = graphene.Schema(query=Query, directives=all_directives)

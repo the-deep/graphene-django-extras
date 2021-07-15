@@ -366,7 +366,7 @@ def queryset_factory(manager, root, info, **kwargs):
     prefetch_related = []
     available_related_fields = get_related_fields(manager.model)
 
-    fields_asts = info.field_nodes
+    fields_asts = info.field_asts
     for f in kwargs.keys():
         temp = available_related_fields.get(f.split("__", 1)[0], None)
         if temp:
