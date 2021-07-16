@@ -39,6 +39,8 @@ class DjangoObjectField(Field):
         id = kwargs.pop("id", None)
         manager = _type._meta.model._default_manager
         queryset = manager.get_queryset()
+        if hasattr(_type, "get_custom_queryset"):
+            queryset = _type.get_custom_queryset(queryset, info)
         if hasattr(_type, "get_custom_node"):
             return _type.get_custom_node(queryset, info, id)
         try:

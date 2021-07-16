@@ -26,7 +26,25 @@ from .serializers import UserSerializer
 class UserType(DjangoObjectType):
     class Meta:
         model = User
-        description = " Type definition for a single user "
+        description = " Type definition for a staff user "
+        filter_fields = {
+            "id": ("exact",),
+            "first_name": ("icontains", "iexact"),
+            "last_name": ("icontains", "iexact"),
+            "username": ("icontains", "iexact"),
+            "email": ("icontains", "iexact"),
+        }
+
+    @staticmethod
+    def get_custom_queryset(queryset, info):
+        return User.objects.filter(is_staff=True)
+
+
+class UserType1(UserType):
+    class Meta:
+        model = User
+        description = " Type definition for a non-staff user "
+        skip_registry = True
         filter_fields = {
             "id": ("exact",),
             "first_name": ("icontains", "iexact"),
@@ -37,7 +55,7 @@ class UserType(DjangoObjectType):
 
     @staticmethod
     def get_custom_node(queryset, info, id):
-        return User.objects.filter(is_staff=True, pk=id).first()
+        return User.objects.filter(is_staff=False, id=id).first()
 
 
 class User1ListType(DjangoListObjectType):
@@ -91,7 +109,8 @@ class Query(graphene.ObjectType):
     # Defining a query for a single user
     # The DjangoObjectField have a ID type input field,
     # that allow filter by id and is't necessary to define resolve function
-    user = DjangoObjectField(UserType, description=_("Single User query"))
+    user = DjangoObjectField(UserType, description=_("Staff User query"))
+    user11 = DjangoObjectField(UserType1, description=_("Non-Staff User query"))
 
     # Another way to define a query to single user
     user1 = User1ListType.RetrieveField(

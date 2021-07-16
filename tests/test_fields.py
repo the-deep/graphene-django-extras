@@ -128,28 +128,55 @@ class DjangoSerializerTypeTest(ParentTest, TestCase):
         staff_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=True)
         normal_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=False)
 
-        # Okay for staff user as get_custom_node will give staff user
-        query = queries.USER % {
+        # Okay for staff user as get_custom_queryset will give staff user
+        query = queries.USER0 % {
             "filter": "id: {}".format(staff_user.id),
             "fields": "username",
         }
         response = self.client.query(query)
         self.assertEqual(response.status_code, 200, response.content)
         data = response.json()
-        self.assertIn("user2", data["data"])
-        self.assertTrue(data["data"]["user2"])
-        self.assertEqual(data["data"]["user2"]["username"], staff_user.username)
+        self.assertIn("user", data["data"])
+        self.assertTrue(data["data"]["user"])
+        self.assertEqual(data["data"]["user"]["username"], staff_user.username)
 
-        # Not okay for normal user as get_custom_node will give staff user
-        query = queries.USER % {
+        # Not okay for normal user as get_custom_queryset will give staff user
+        query = queries.USER0 % {
             "filter": "id: {}".format(normal_user.id),
             "fields": "username",
         }
         response = self.client.query(query)
         self.assertEqual(response.status_code, 200, response.content)
         data = response.json()
-        self.assertIn("user2", data["data"])
-        self.assertFalse(data["data"]["user2"])
+        self.assertIn("user", data["data"])
+        self.assertFalse(data["data"]["user"])
+
+    def test_filter_single_object_with_custom_node(self):
+        staff_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=True)
+        normal_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=False)
+
+        # Okay for non-staff user as get_custom_node will give staff user
+        query = queries.USER11 % {
+            "filter": "id: {}".format(normal_user.id),
+            "fields": "username",
+        }
+        response = self.client.query(query)
+        self.assertEqual(response.status_code, 200, response.content)
+        data = response.json()
+        self.assertIn("user11", data["data"])
+        self.assertTrue(data["data"]["user11"])
+        self.assertEqual(data["data"]["user11"]["username"], normal_user.username)
+
+        # Not okay for normal user as get_custom_node will give non-staff user
+        query = queries.USER11 % {
+            "filter": "id: {}".format(staff_user.id),
+            "fields": "username",
+        }
+        response = self.client.query(query)
+        self.assertEqual(response.status_code, 200, response.content)
+        data = response.json()
+        self.assertIn("user11", data["data"])
+        self.assertFalse(data["data"]["user11"])
 
     def test_filter_single_object(self):
         staff_user = factories.UserFactory(username=uuid.uuid4().hex, is_staff=True)

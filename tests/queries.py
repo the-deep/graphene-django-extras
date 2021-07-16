@@ -44,6 +44,23 @@ ALL_USERS3_WITH_FILTER = """query {
 }
 """
 
+# Staff users (using get_custom_queryset)
+USER0 = """query {
+  user (%(filter)s) {
+      %(fields)s
+  }
+}
+"""
+
+# Non-staff users (using get_custom_node)
+USER11 = """query {
+  user11 (%(filter)s) {
+      %(fields)s
+  }
+}
+"""
+
+
 # Queries for DjangoSerializerType
 USER = """query {
   user2 (%(filter)s) {
